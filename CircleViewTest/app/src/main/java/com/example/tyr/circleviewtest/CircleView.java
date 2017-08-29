@@ -34,6 +34,13 @@ public class CircleView extends View {
     private int count;
     //文字大小
     private int textSize;
+    //背景宽
+    private int width;
+    //背景高
+    private int height;
+    //右移下移
+    private int rM;
+    private int dM;
 
     //弧形的画笔
     private Paint paint;
@@ -82,12 +89,12 @@ public class CircleView extends View {
 
         paint =new Paint();
         //设置画笔颜色
-        paint.setColor(Color.BLACK);
+        paint.setColor(Color.WHITE);
         //设置画笔抗锯齿
         paint.setAntiAlias(true);
         //让画出的图形是空心的(不填充)
         paint.setStyle(Paint.Style.STROKE);
-
+        paint.setStrokeWidth(2);
         //文本画笔
         textPaint = new Paint();
         textPaint.setColor(Color.BLACK);
@@ -103,7 +110,7 @@ public class CircleView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        canvas.drawArc(oval, startAngle, sweepAngle, useCenter, paint);
+        drawArc(canvas);
         drawViewLine(canvas);
         drawArow(canvas);
         drawText(canvas);
@@ -114,16 +121,17 @@ public class CircleView extends View {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         //根据模式测算长宽
 
-        int width = measureSize(widthMeasureSpec);
-        int height = measureSize(heightMeasureSpec);
+        width = measureSize(widthMeasureSpec);
+        height = measureSize(heightMeasureSpec);
         //以最小值为刻度区域正方形的长
         len = Math.min(width, height);
+        len/=1.2;
         //确定圆弧所在的矩形区域
-        oval = new RectF(0, 0, len, len);
-        radius = len/2;
+        rM  = width/2;
+        dM  = height/2;
         //设置测量高度和宽度
-
-        setMeasuredDimension(len, len);
+        radius = len/2;
+        setMeasuredDimension(width, height);
     }
 
     private int measureSize(int measureSpec){
@@ -134,7 +142,7 @@ public class CircleView extends View {
         if (specMode==MeasureSpec.EXACTLY){
             reslut = specSize;
         }else{
-            reslut = 200;
+            reslut = 800;
             if (specMode==MeasureSpec.AT_MOST){
                 reslut = Math.min(reslut,specSize);
             }
@@ -142,19 +150,26 @@ public class CircleView extends View {
 
         return  reslut;
     }
+    private void drawArc(Canvas canvas){
+        canvas.save();
+
+        canvas.translate(rM,dM);
+        oval = new RectF(-len/2,-len/2, len/2, len/2);
+
+        canvas.drawArc(oval, startAngle, sweepAngle, useCenter, paint);
+        canvas.restore();
+    }
 
     private void drawViewLine(Canvas canvas) {
         canvas.save();
         //移动canvas
-        canvas.translate(radius,radius);
+        canvas.translate(rM,dM);
         //旋转canvas
         canvas.rotate(startAngle-90);
         //普通刻度
         Paint linePatin=new Paint();
         //设置普通刻度画笔颜色
-        linePatin.setColor(Color.BLACK);
-        //线宽
-        linePatin.setStrokeWidth(2);
+        linePatin.setColor(Color.WHITE);
         //设置画笔抗锯齿
         linePatin.setAntiAlias(true);
        /* //画一条刻度线
@@ -180,7 +195,7 @@ public class CircleView extends View {
                 }
                 targetLinePatin.setARGB(255,red,green,0);
                 //计算已经绘制的比例
-                canvas.drawCircle(0,radius-pDisArc,10,targetLinePatin);
+                canvas.drawCircle(0,radius-pDisArc,7,targetLinePatin);
                // canvas.drawLine(0, radius-20, 0, radius - 30, targetLinePatin);
             } else {
                 canvas.drawCircle(0,radius-pDisArc,5,linePatin);
@@ -198,12 +213,14 @@ public class CircleView extends View {
 
     private void drawArow(Canvas canvas){
         canvas.save();
-        canvas.translate(radius, radius);
+        canvas.translate(rM, dM);
         canvas.rotate(targetAngle+startAngle-90);
         Paint paint = new Paint();
         paint.setStyle(Paint.Style.FILL);
         Bitmap bitmap = BitmapFactory.decodeResource(getResources(),R.drawable.arrow);
-        float left =0 ;
+        int bheight = bitmap.getHeight();
+        int bwidth = bitmap.getWidth();
+        float left =-bwidth/2 ;
         float top = radius-150;
         canvas.drawBitmap(bitmap,left,top,paint);
         canvas.restore();
@@ -211,7 +228,7 @@ public class CircleView extends View {
 
     private void drawText(Canvas canvas){
         canvas.save();
-        canvas.translate(radius, radius);
+        canvas.translate(rM,dM);
         canvas.drawText("仪表盘", 0, 0, textPaint);
         canvas.drawText((int)(percent*100)+"%",0,-80,textPaint);
         canvas.restore();
